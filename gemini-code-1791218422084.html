@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Root & Branch with Sidebar Ad</title>
+    <style>
+        body {
+            background: #f3efe3;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            font-family: system-ui, sans-serif;
+        }
+        /* This wrapper holds both the game iframe/content and the ad sidebar side-by-side */
+        #game-layout-wrapper {
+            display: flex;
+            flex-direction: row;
+            gap: 16px;
+            padding: 16px;
+            max-width: 900px;
+            width: 100%;
+            align-items: flex-start;
+            justify-content: center;
+        }
+        /* Styling for the side ad container */
+        #sidebar-ad {
+            width: 250px;
+            background: #fffaf0;
+            border-radius: 14px;
+            padding: 12px;
+            text-align: center;
+            box-shadow: 0 4px 12px #0002;
+            font-size: 12px;
+            display: none; /* Hidden on mobile by default */
+        }
+        /* Show the sidebar ad only on wider screens where it fits nicely */
+        @media (min-width: 860px) {
+            #sidebar-ad {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-layout-wrapper">
+        <!-- 1. Embed your game here (via iframe or dropping the code directly) -->
+        <iframe src="game.html" style="border:none; width:100%; max-width:560px; height:800px; border-radius:16px;"></iframe>
+
+        <!-- 2. The Ad Banner on the Side -->
+        <div id="sidebar-ad">
+            <span style="opacity: 0.7; display: block; margin-bottom: 8px;">[ Sponsored ]</span>
+            <!-- AdSense Code -->
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+                 data-ad-slot="YYYYYYYYYY"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>
+                 (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
+    </div>
+
+</body>
+</html>

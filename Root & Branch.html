@@ -1,0 +1,150 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Root &amp; Branch</title><style>
+:root{--bg:#f3efe3;--ink:#3b3226;--card:#fffaf0;--acc:#5f9b4a;--line:rgba(60,80,60,.28);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d231c;--ink:#eee6d3;--card:#2b3327;--acc:#8fcf6f}}
+:root[data-theme="dark"]{--bg:#1d231c;--ink:#eee6d3;--card:#2b3327;--acc:#8fcf6f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px ui-rounded,Nunito,system-ui,sans-serif;display:flex;justify-content:center;-webkit-tap-highlight-color:transparent;user-select:none}
+#app{width:100%;max-width:560px;display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 12px}
+header{width:100%;display:flex;justify-content:space-between;align-items:center}h1{margin:0;font-size:25px}
+button{font:inherit;border:0;border-radius:999px;padding:9px 16px;background:var(--card);color:var(--ink);box-shadow:0 2px 8px #0003;cursor:pointer}button:focus-visible{outline:3px solid var(--acc)}
+#sc{position:relative;width:100%;padding:10px;border-radius:22px;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:0 8px 26px #0003;transition:filter 1.5s;background:repeating-linear-gradient(90deg,transparent 0 46px,var(--line) 46px 48px),repeating-linear-gradient(0deg,transparent 0 46px,var(--line) 46px 48px),linear-gradient(#bfe0ee,#e6f2d6)}
+#sc::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,#d8cfb8,#8f8670);opacity:var(--dust,.5);mix-blend-mode:multiply;pointer-events:none;transition:opacity 1.5s}
+#shelf{display:flex;gap:6px}
+.sl{width:44px;height:44px;border-radius:12px;background:#fff8;display:grid;place-items:center;font-size:24px;opacity:.4;filter:grayscale(1);border:2px solid transparent}
+.sl.on{opacity:1;filter:none;cursor:pointer}.sl.cur{border-color:var(--acc)}
+canvas{display:block;border-radius:14px;touch-action:manipulation}
+.row{display:flex;gap:10px}small{opacity:.7;text-align:center}
+#card{position:fixed;inset:0;display:none;place-items:center;background:#0007;z-index:9}#card.show{display:grid}
+#card>div{background:var(--card);border-radius:24px;padding:24px;max-width:340px;margin:16px;text-align:center}
+#card h2{margin:4px 0}#card p{line-height:1.5}#cb{background:var(--acc);color:#fff}
+#shelf{gap:3px}.sl{width:28px;height:28px;font-size:16px;border-radius:9px}
+#nv{width:100%;align-items:center;justify-content:space-between}#info{flex:1;text-align:center}
+#lv{position:fixed;inset:0;display:none;place-items:center;background:#0007;z-index:9}#lv.show{display:grid}
+#lv>div{background:var(--card);border-radius:24px;padding:16px;width:min(380px,92vw);max-height:82vh;overflow:auto;text-align:center}
+#lg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}#lg h3{grid-column:1/-1;margin:10px 0 0;text-align:left;font-size:15px}
+#lg button{padding:10px 0}#lg .ok{background:var(--acc);color:#fff}#lg .cur{outline:3px solid var(--acc)}
+</style></head><body><div id="app">
+<header><h1>Root &amp; Branch</h1><span><button id="mp">🗺️ Levels</button> <button id="snd" aria-label="Toggle music">🔊</button></span></header>
+<div id="sc"><div id="shelf"></div><canvas id="cv"></canvas></div>
+<div class="row" id="nv"><button id="pv" aria-label="Previous level">◀</button><div id="info"></div><button id="nx" aria-label="Next level">▶</button></div>
+<div class="row"><button id="hb">💡 Hint</button><button id="nb">🔀 New layout</button></div>
+<small>Tap a root to turn it. No timers, no wrong moves. Water every seed to restore the room.</small>
+</div>
+<div id="card"><div><div id="ce" style="font-size:56px"></div><h2 id="cn"></h2><p id="cf"></p><button id="cb"></button></div></div>
+<div id="lv"><div><h2>Levels</h2><div id="lg"></div><p><button id="lc">Close</button></p></div></div>
+<script>
+const $=s=>document.querySelector(s),cv=$('#cv'),X=cv.getContext('2d');
+X.roundRect||(X.roundRect=function(x,y,w,h){this.rect(x,y,w,h)});
+// room, plant, emoji, fact, cols, rows, seeds, rocks
+const R=[
+["Sunflower Bay","Sunflower","🌻","Young sunflowers follow the sun from east to west all day, then swing back to face east before dawn.",4,4,2,0],
+["Orchid Row","Orchid","🌸","Orchid seeds are almost as fine as dust and carry hardly any food, so in nature most need a helper fungus to sprout.",5,5,2,1],
+["Cactus Court","Saguaro","🌵","A saguaro cactus can take 50 to 70 years to grow its first arm.",5,6,3,1],
+["Bamboo Walk","Bamboo","🎋","Some bamboo species can grow nearly a meter in a single day, among the fastest growth of any plant.",6,6,3,2],
+["Lily Pond","Giant water lily","🪷","Giant Amazon water lilies grow leaves over two meters wide, with ribbed undersides that make them surprisingly strong.",6,7,4,2],
+["Old Oak Hall","Oak","🌳","Oak roots often trade sugars for water and minerals with underground fungi, a partnership found in most land plants.",7,7,4,3],
+["Palm Atrium","Coconut palm","🌴","A coconut can drift on ocean currents for months and still sprout when it washes up on a distant beach."],
+["Tulip Terrace","Tulip","🌷","Tulips keep growing and bending toward the light even after they are cut."],
+["Carnivore Corner","Venus flytrap","🪴","A Venus flytrap only snaps shut if two of its trigger hairs are touched within about 20 seconds, which helps it ignore raindrops."],
+["Redwood Gallery","Coast redwood","🌲","Coast redwoods are the tallest trees on Earth, with the biggest reaching well over 110 meters."]];
+const HUE=[48,330,350,130,300,28,190,345,95,15],DX=[0,1,0,-1],DY=[-1,0,1,0],rot=m=>((m<<1)|(m>>3))&15;
+const rng=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const mk=o=>{let m=o.b;for(let i=o.r&3;i--;)m=rot(m);return m};
+let W,H,sc,cells,CS,D=1,L=0,V=0,NS=1,NW=0,BASE=0,done=0,NX=0,P=[],hint=0,T=0,un=[];
+try{un=JSON.parse(localStorage.rb2||'[]')}catch(e){}
+// ---------- puzzle generation: random tree from the pipe to the seeds, then scrambled ----------
+function gen(l,v){const W=4+(l/25|0),H=4+(l/20|0),ns=Math.min(8,1+(l/13|0)),nr=l<12?0:Math.min(6,l/12|0),r=rng(l*977+v*131+7),n=W*H,sc=r()*W|0,
+ par=Array(n).fill(-1),dir=Array(n).fill(0),dep=Array(n).fill(0),inT=Array(n).fill(0),ch=Array(n).fill(0);
+ const fr=[],add=c=>{for(let d=0;d<4;d++){const x=c%W+DX[d],y=(c/W|0)+DY[d];if(x>=0&&y>=0&&x<W&&y<H&&!inT[y*W+x])fr.push([c,y*W+x,d])}};
+ inT[sc]=1;add(sc);
+ while(fr.length){const[a,b,d]=fr.splice(r()*fr.length|0,1)[0];if(inT[b])continue;inT[b]=1;par[b]=a;dir[b]=d;dep[b]=dep[a]+1;ch[a]++;add(b)}
+ let lv=[];for(let c=0;c<n;c++)if(c!=sc&&!ch[c])lv.push(c);
+ lv.sort((a,b)=>dep[b]-dep[a]);lv=lv.slice(0,Math.max(ns+2,lv.length>>1));
+ const sd=[];while(sd.length<ns&&lv.length)sd.push(lv.splice(r()*lv.length|0,1)[0]);
+ const keep=Array(n).fill(0),ms=Array(n).fill(0);keep[sc]=1;ms[sc]=1;
+ sd.forEach(c=>{keep[c]=1;while(c!=sc){const p=par[c],d=dir[c];ms[p]|=1<<d;ms[c]|=1<<((d+2)%4);keep[p]=1;c=p}});
+ const c=[];for(let i=0;i<n;i++){const o={k:0,b:0,r:0,a:0,t:0,w:0,g:0,bl:0,rk:1,wet:0,cl:0,was:0};
+  if(sd.includes(i))o.k=2;
+  else if(keep[i]){o.k=1;o.b=o.sol=ms[i];o.r=1+r()*3|0}
+  else if(r()<.3){o.k=1;o.b=[5,3,7][r()*3|0];o.r=r()*4|0}
+  o.a=o.t=o.r*Math.PI/2;c.push(o)}
+ const cd=c.map((o,i)=>o.sol&&i!=sc?i:-1).filter(i=>i>=0);
+ for(let i=0;i<nr&&cd.length;i++){const o=c[cd.splice(r()*cd.length|0,1)[0]];o.k=3;o.b=0;o.r=0;o.a=o.t=0}
+ return{W,H,sc,c,ns:sd.length}}
+// ---------- water flow ----------
+function flow(init){const q=[],S=cells[sc];cells.forEach(o=>o.wet=0);
+ if(mk(S)&1){S.wet=1;q.push(sc)}
+ while(q.length){const c=q.shift(),o=cells[c],m=o.k==1?mk(o):15;
+  for(let d=0;d<4;d++){if(!(m>>d&1))continue;const x=c%W+DX[d],y=(c/W|0)+DY[d];if(x<0||y<0||x>=W||y>=H)continue;
+   const j=y*W+x,p=cells[j];if(p.wet)continue;
+   if(p.k==1){if(mk(p)>>((d+2)%4)&1){p.wet=1;q.push(j)}}
+   else if(p.k==2)p.wet=1;
+   else if(p.k==3){if(!p.cl&&!init){burst(j,'#d9d2c0');tok()}p.cl=1;p.wet=1;q.push(j)}}}
+ let nw=0;cells.forEach((o,i)=>{if(o.k==2){if(o.wet){nw++;if(!o.was&&!init){burst(i,'#ffd95e');chime()}}o.was=o.wet}});
+ NW=nw;LAY=Math.min(6,BASE+nw);vis();
+ if(!init&&!done&&nw==NS){done=1;const fr=!un.some(n=>(n/10|0)==(L/10|0));if(!un.includes(L))un.push(L);try{localStorage.rb2=JSON.stringify(un)}catch(e){}win();vis();setTimeout(()=>show(L,1,fr),1400)}}
+function vis(){const w=L/10|0,p=Math.min(1,(un.filter(n=>(n/10|0)==w).length+(done||un.includes(L)?0:NW/NS))/10);
+ $('#sc').style.filter=`saturate(${.1+.9*p})`;$('#sc').style.setProperty('--dust',(1-p)*.5);
+ $('#info').textContent=`Level ${L+1}/100 · ${R[w][0]} · 🌱 ${NW}/${NS}`;
+ document.querySelectorAll('.sl').forEach((d,i)=>{d.classList.toggle('on',un.some(n=>(n/10|0)==i));d.classList.toggle('cur',i==w)})}
+function start(l,v){L=l;V=v;const q=gen(l,v);W=q.W;H=q.H;sc=q.sc;cells=q.c;NS=q.ns;done=0;NW=0;P=[];hint=0;BASE=Math.min(2,l/20|0);size();flow(1)}
+function size(){const aw=Math.min(innerWidth-56,500),ah=innerHeight-330;CS=Math.max(30,Math.min(aw/W,ah/(H+1),80)|0);D=Math.min(devicePixelRatio||1,2);
+ cv.width=CS*W*D;cv.height=CS*(H+1)*D;cv.style.width=CS*W+'px';cv.style.height=CS*(H+1)+'px'}
+function show(l,nx,fresh){const w=l/10|0,r=R[w];$('#ce').textContent=r[2];$('#cn').textContent=fresh?r[1]+' unlocked!':'Level '+(l+1)+' restored';$('#cf').textContent=fresh?r[3]:un.filter(n=>(n/10|0)==w).length+' of 10 levels restored in '+r[0];$('#cb').textContent=nx?(l<99?'Next level →':'Back to level 1'):'Close';NX=nx;$('#card').classList.add('show')}
+// ---------- drawing ----------
+const ci=(x,y,r)=>{X.beginPath();X.arc(x,y,r,0,7);X.fill()};
+function burst(j,c){const x=(j%W+.5)*CS,y=((j/W|0)+1.5)*CS;for(let i=0;i<14;i++)P.push({x,y,vx:(Math.random()-.5)*3,vy:-Math.random()*2.5,l:1,c})}
+function arm(m,wet,s){X.lineCap='round';const p=(w,c)=>{X.strokeStyle=c;X.lineWidth=w;X.beginPath();for(let d=0;d<4;d++)if(m>>d&1){X.moveTo(0,0);X.lineTo(DX[d]*s/2,DY[d]*s/2)}X.stroke()};
+ p(s*.2,wet?'#6f4a2a':'#a88a64');if(wet){X.setLineDash([s*.1,s*.14]);X.lineDashOffset=-T/30;p(s*.07,'#8fdcff');X.setLineDash([])}
+ X.fillStyle=wet?'#5f8f3a':'#8d7352';ci(0,0,s*.13)}
+function seed(o,s){X.fillStyle='#5a3c22';X.save();X.scale(1,1.3);ci(0,s*.03,s*.13);X.restore();const g=o.g;
+ if(g>.02){X.strokeStyle='#4f9a3c';X.lineWidth=s*.07;X.lineCap='round';X.beginPath();X.moveTo(0,0);X.quadraticCurveTo(s*.05,-s*.2*g,0,-s*.3*g);X.stroke();
+  X.fillStyle='#7bc74d';[-1,1].forEach(k=>{X.save();X.translate(k*s*.1*g,-s*.2*g);X.rotate(k*.6);X.scale(1,.5);ci(0,0,s*.13*g);X.restore()});
+  if(o.bl>.02){X.fillStyle=`hsl(${HUE[L/10|0]},85%,68%)`;for(let i=0;i<6;i++){X.save();X.translate(0,-s*.3*g);X.rotate(i*1.047+T/3000);ci(0,-s*.1*o.bl,s*.07*o.bl);X.restore()}X.fillStyle='#ffd95e';ci(0,-s*.3*g,s*.05*o.bl)}}}
+function rock(s){X.fillStyle='#8e8a80';ci(-s*.1,s*.05,s*.2);ci(s*.12,s*.08,s*.17);ci(0,-s*.1,s*.18);X.fillStyle='#a8a498';ci(-s*.05,-s*.12,s*.07)}
+function draw(){const s=CS;X.setTransform(D,0,0,D,0,0);X.clearRect(0,0,W*s,(H+1)*s);
+ const px=sc*s+s/2;X.lineCap='round';X.strokeStyle='#b8733f';X.lineWidth=s*.3;X.beginPath();X.moveTo(0,s*.4);X.lineTo(px,s*.4);X.lineTo(px,s*.85);X.stroke();
+ X.strokeStyle=cells[sc].wet?'#8fdcff':'#e8b98a';X.lineWidth=s*.12;X.stroke();
+ const f=(T/800)%1;X.globalAlpha=1-f;X.fillStyle='#8fdcff';ci(px,s*(.9+f*.25),s*.05);X.globalAlpha=1;
+ cells.forEach((o,c)=>{const x=c%W*s,y=((c/W|0)+1)*s,w=o.w;
+  X.fillStyle=`rgb(${201-91*w|0},${183-103*w|0},${156-98*w|0})`;X.beginPath();X.roundRect(x+2,y+2,s-4,s-4,s*.2);X.fill();
+  if(hint&&hint.c==c&&T<hint.u){X.strokeStyle='#ffd95e';X.lineWidth=3;X.globalAlpha=.55+.45*Math.sin(T/120);X.stroke();X.globalAlpha=1}
+  X.save();X.translate(x+s/2,y+s/2);
+  if(o.k==1){X.rotate(o.a);arm(o.b,o.wet,s)}
+  else if(o.k==3){if(o.cl)arm(15,o.wet,s);X.globalAlpha=o.rk;rock(s)}
+  else if(o.k==2)seed(o,s);
+  X.restore()});
+ P=P.filter(p=>(p.l-=.018)>0);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.03;X.globalAlpha=p.l;X.fillStyle=p.c;ci(p.x,p.y,s*.04+2)});X.globalAlpha=1}
+function tick(t){T=t;cells.forEach(o=>{o.a+=(o.t-o.a)*.25;o.w+=((o.wet?1:0)-o.w)*.07;o.g+=((o.wet?1:0)-o.g)*.06;o.bl+=((done?1:0)-o.bl)*.04;o.rk+=((o.cl?0:1)-o.rk)*.1});draw();requestAnimationFrame(tick)}
+// ---------- growing acoustic soundtrack: each watered seed adds a layer ----------
+let AC,M,NZ,mute=0,LAY=0,stp=0,nT=0;
+const hz=n=>440*2**((n-69)/12),CH=[[48,60,64,67,71],[45,57,60,64,67],[41,53,57,60,64],[43,55,59,62,64]];
+function au(){if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();M=AC.createGain();M.gain.value=mute?0:.5;
+ const d=AC.createDelay(1),f=AC.createGain();d.delayTime.value=.42;f.gain.value=.3;d.connect(f);f.connect(d);M.connect(AC.destination);M.connect(d);d.connect(AC.destination);
+ NZ=AC.createBuffer(1,4410,44100);NZ.getChannelData(0).forEach((_,i,a)=>a[i]=Math.random()*2-1);nT=AC.currentTime+.1;setInterval(sched,60)}AC.resume()}
+function nt(type,f,t,dur,vol,lp){const o=AC.createOscillator(),g=AC.createGain(),fl=AC.createBiquadFilter();o.type=type;o.frequency.value=f;fl.type='lowpass';fl.frequency.value=lp||2000;
+ g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+(dur>2?dur*.3:.01));g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(fl);fl.connect(g);g.connect(M);o.start(t);o.stop(t+dur+.05)}
+function sched(){while(nT<AC.currentTime+.25){const s=stp%32,c=CH[s>>3],i=s&7,t=nT,rd=Math.random;
+ if(LAY>0)nt('triangle',hz(c[[1,2,3,4,3,2,3,4][i]]),t,1.2,.13,1800);
+ if(LAY>1&&i%4==0)nt('sine',hz(c[0]),t,1.8,.22,500);
+ if(LAY>2&&i==0)c.slice(2).forEach(n=>nt('sine',hz(n),t,3.4,.05));
+ if(LAY>3&&i%2&&rd()<.6)nt('sine',hz(c[1+rd()*4|0]+24),t,1.6,.05);
+ if(LAY>4&&i%2){const b=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();b.buffer=NZ;f.type='highpass';f.frequency.value=6000;g.gain.setValueAtTime(.05,t);g.gain.exponentialRampToValueAtTime(.001,t+.07);b.connect(f);f.connect(g);g.connect(M);b.start(t)}
+ if(LAY>5&&[0,3,6].includes(i)&&rd()<.8)nt('triangle',hz([72,74,76,79,81][rd()*5|0]),t,1,.1,2600);
+ stp++;nT+=.395}}
+const tok=()=>AC&&nt('triangle',200,AC.currentTime,.12,.2,700),
+chime=()=>AC&&[76,83,88].forEach((n,i)=>nt('sine',hz(n),AC.currentTime+i*.1,1.3,.12)),
+win=()=>AC&&[60,64,67,72,76,79].forEach((n,i)=>nt('sine',hz(n),AC.currentTime+i*.13,2,.1));
+// ---------- input ----------
+cv.onpointerdown=e=>{au();const b=cv.getBoundingClientRect(),x=(e.clientX-b.left)/CS|0,y=((e.clientY-b.top)/CS|0)-1;
+ if(x<0||y<0||x>=W||y>=H||done)return;const o=cells[y*W+x];if(o.k!=1)return;o.r++;o.t+=Math.PI/2;hint=0;tok();flow()};
+addEventListener('pointerdown',au);addEventListener('resize',()=>cells&&size());
+$('#snd').onclick=()=>{au();mute=!mute;M.gain.value=mute?0:.5;$('#snd').textContent=mute?'🔇':'🔊'};
+$('#hb').onclick=()=>{const i=cells.findIndex(o=>o.k==1&&o.sol&&mk(o)!=o.sol);if(i>=0)hint={c:i,u:T+3000}};
+$('#nb').onclick=()=>start(L,V+1);$('#pv').onclick=()=>start((L+99)%100,0);$('#nx').onclick=()=>start((L+1)%100,0);$('#lc').onclick=()=>$('#lv').classList.remove('show');
+$('#mp').onclick=()=>{const g=$('#lg');g.innerHTML='';R.forEach((r,w)=>{const h=document.createElement('h3');h.textContent=r[2]+' '+r[0];g.append(h);for(let j=0;j<10;j++){const n=w*10+j,b=document.createElement('button');b.textContent=n+1;b.className=(un.includes(n)?'ok ':'')+(n==L?'cur':'');b.onclick=()=>{$('#lv').classList.remove('show');start(n,0)};g.append(b)}});$('#lv').classList.add('show')};
+$('#cb').onclick=()=>{$('#card').classList.remove('show');if(NX)start(L<99?L+1:0,0)};
+R.forEach((r,i)=>{const d=document.createElement('div');d.className='sl';d.title=r[1];d.textContent=r[2];d.onclick=()=>{const l=un.find(n=>(n/10|0)==i);l!=null&&show(l,0,1)};$('#shelf').append(d)});
+start(Math.max(0,[...Array(100).keys()].findIndex(i=>!un.includes(i))),0);requestAnimationFrame(tick);
+</script></body></html>
